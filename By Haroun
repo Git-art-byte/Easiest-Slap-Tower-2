@@ -1,0 +1,428 @@
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+
+Fluent:Notify({
+        Title = "Thanks You!",
+        Content = "Thank you for using Our Script.",
+        SubContent = "Enjoy!", -- Optional
+        Duration = 3 -- Set to nil to make the notification not disappear
+})
+
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+
+local Window = Fluent:CreateWindow({
+    Title = "Troll Easiest Tower 2 👋" .. Fluent.Version,
+    SubTitle = "by Haroun",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = true,
+    Theme = "Aqua",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
+
+-- Tabs
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "life-buoy" }),
+    Player = Window:AddTab({ Title = "Player", Icon = "user" }),
+    Scripts = Window:AddTab({ Title = "Scripts", Icon = "info" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+
+-- Must come after Tabs are created
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+-- Toggle
+local running = false
+
+local MoneyToggle = Tabs.Main:AddToggle("MoneyToggle", {
+    Title = "Infinite Money [OP]",
+    Description = "",
+    Default = false,
+    Callback = function(state)
+        running = state
+        if state then
+            print("Toggle On")
+            task.spawn(function()
+                while running do
+                    local args = {
+                        game:GetService("Players"):WaitForChild("Haroun2010_94")
+                    }
+
+                    game:GetService("ReplicatedStorage"):WaitForChild("RestartRemotes")
+                        :WaitForChild("GiveClaimMoney"):FireServer(unpack(args))
+
+                    task.wait(0.05) -- Avoid spamming too fast
+                end
+            end)
+        else
+            print("Toggle Off")
+        end
+    end
+})
+
+local infiniteJumpEnabled = false
+
+local InfiniteJumpToggle = Tabs.Player:AddToggle("InfiniteJumpToggle", {
+    Title = "Infinite Jump",
+    Description = "Enables infinite jumping",
+    Default = false,
+    Callback = function(state)
+        infiniteJumpEnabled = state
+        if state then
+            print("Infinite Jump: ON")
+        else
+            print("Infinite Jump: OFF")
+        end
+    end
+})
+
+-- Hook into UserInputService to detect jumps
+local UserInputService = game:GetService("UserInputService")
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled then
+        local character = game:GetService("Players").LocalPlayer.Character
+        if character and character:FindFirstChildOfClass("Humanoid") then
+            character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+local noclipEnabled = false
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local NoclipToggle = Tabs.Player:AddToggle("NoclipToggle", {
+    Title = "Noclip",
+    Description = "Walk through walls and objects",
+    Default = false,
+    Callback = function(state)
+        noclipEnabled = state
+        if state then
+            print("Noclip: ON")
+        else
+            print("Noclip: OFF")
+        end
+    end
+})
+
+-- Loop to disable collisions when noclip is on
+RunService.Stepped:Connect(function()
+    if noclipEnabled then
+        local character = LocalPlayer.Character
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide == true then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+
+-- Input
+
+local WalkSpeedInput = Tabs.Player:AddInput("WalkSpeedInput", {
+    Title = "WalkSpeed",
+    Description = "Enter a WalkSpeed value",
+    Default = "16", -- Default Roblox walk speed
+    Placeholder = "e.g. 50",
+    Numeric = true, -- Only allows numbers
+    Finished = true, -- Only calls callback when Enter is pressed
+    Callback = function(Value)
+        local speed = tonumber(Value)
+        if speed then
+            local character = game:GetService("Players").LocalPlayer.Character
+            if character and character:FindFirstChildOfClass("Humanoid") then
+                character:FindFirstChildOfClass("Humanoid").WalkSpeed = speed
+                print("WalkSpeed set to:", speed)
+            else
+                warn("Character or Humanoid not found.")
+            end
+        else
+            warn("Invalid number entered.")
+        end
+    end
+})
+
+local JumpPowerInput = Tabs.Player:AddInput("JumpPowerInput", {
+    Title = "JumpPower",
+    Description = "Enter a JumpPower value",
+    Default = "50", -- Default Roblox jump power
+    Placeholder = "e.g. 100",
+    Numeric = true,
+    Finished = true,
+    Callback = function(Value)
+        local jumpPower = tonumber(Value)
+        if jumpPower then
+            local character = game:GetService("Players").LocalPlayer.Character
+            if character and character:FindFirstChildOfClass("Humanoid") then
+                character:FindFirstChildOfClass("Humanoid").JumpPower = jumpPower
+                print("JumpPower set to:", jumpPower)
+            else
+                warn("Character or Humanoid not found.")
+            end
+        else
+            warn("Invalid number entered.")
+        end
+    end
+})
+
+
+local rewardAmount = "0"
+
+local MoneyInput = Tabs.Main:AddInput("MoneyInput", {
+    Title = "Money Amount",
+    Description = "Enter the amount to give",
+    Default = "Default",
+    Placeholder = "",
+    Numeric = true,
+    Finished = false,
+    Callback = function(Value)
+        rewardAmount = tostring(Value)
+        print("Reward amount set to:", rewardAmount)
+    end
+})
+
+-- Buttons
+Tabs.Main:AddButton({
+    Title = "Give Money",
+    Description = "Generate Money",
+    Callback = function()
+        if rewardAmount == "0" or rewardAmount == "" then
+            warn("Invalid input amount.")
+            return
+        end
+
+        local args = { rewardAmount }
+
+        game:GetService("ReplicatedStorage"):WaitForChild("CratesUtilities")
+            :WaitForChild("Remotes")
+            :WaitForChild("GiveReward"):FireServer(unpack(args))
+
+        print("Fired GiveReward with:", rewardAmount)
+    end
+})
+
+Tabs.Main:AddButton({
+    Title = "Slap All [OP]",
+    Description = "Slap all the players in the server except you",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        local glove = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("GiantGlove")
+
+        if not glove or not glove:FindFirstChild("Event") then
+            warn("GiantGlove or its Event not found!")
+            return
+        end
+
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                local args = {
+                    "slash",
+                    player.Character,
+                    Vector3.new(-2.462301254272461, 1.5903712835552142e-07, -11.744661331176758)
+                }
+
+                glove.Event:FireServer(unpack(args))
+            end
+        end
+
+        print("Slapped all players!")
+    end
+})
+
+Tabs.Scripts:AddButton({
+    Title = "Infinite Yield",
+    Description = "",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+    end
+})
+
+Tabs.Scripts:AddButton({
+    Title = "Realistic Graphics",
+    Description = "",
+    Callback = function()
+        --[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+local light = game.Lighting
+for i, v in pairs(light:GetChildren()) do
+	v:Destroy()
+end
+
+local ter = workspace.Terrain
+local color = Instance.new("ColorCorrectionEffect")
+local bloom = Instance.new("BloomEffect")
+local sun = Instance.new("SunRaysEffect")
+local blur = Instance.new("BlurEffect")
+
+color.Parent = light
+bloom.Parent = light
+sun.Parent = light
+blur.Parent = light
+
+-- enable or disable shit
+
+local config = {
+
+	Terrain = true;
+	ColorCorrection = true;
+	Sun = true;
+	Lighting = true;
+	BloomEffect = true;
+	
+}
+
+-- settings {
+
+color.Enabled = false
+color.Contrast = 0.15
+color.Brightness = 0.1
+color.Saturation = 0.25
+color.TintColor = Color3.fromRGB(255, 222, 211)
+
+bloom.Enabled = false
+bloom.Intensity = 0.1
+
+sun.Enabled = false
+sun.Intensity = 0.2
+sun.Spread = 1
+
+bloom.Enabled = false
+bloom.Intensity = 0.05
+bloom.Size = 32
+bloom.Threshold = 1
+
+blur.Enabled = false
+blur.Size = 6
+
+-- settings }
+
+
+if config.ColorCorrection then
+	color.Enabled = true
+end
+
+
+if config.Sun then
+	sun.Enabled = true
+end
+
+
+if config.Terrain then
+	-- settings {
+	ter.WaterColor = Color3.fromRGB(10, 10, 24)
+	ter.WaterWaveSize = 0.15
+	ter.WaterWaveSpeed = 22
+	ter.WaterTransparency = 1
+	ter.WaterReflectance = 0.05
+	-- settings }
+end
+
+
+if config.Lighting then
+	-- settings {
+	light.Ambient = Color3.fromRGB(0, 0, 0)
+	light.Brightness = 4
+	light.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)
+	light.ColorShift_Top = Color3.fromRGB(0, 0, 0)
+	light.ExposureCompensation = 0
+	light.FogColor = Color3.fromRGB(132, 132, 132)
+	light.GlobalShadows = true
+	light.OutdoorAmbient = Color3.fromRGB(112, 117, 128)
+	light.Outlines = false
+	-- settings }
+end
+
+
+
+game:GetService("MaterialService")["Use2022Materials"] = true
+    end
+})
+
+Tabs.Main:AddButton({
+    Title = "Fly [OP]",
+    Description = "Make u fly",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+    end
+})
+
+-- Store selected player name
+local selectedPlayer = nil
+
+-- Generate player names (excluding local player)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function getPlayerNames()
+    local names = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            table.insert(names, player.Name)
+        end
+    end
+    return names
+end
+
+-- Dropdown
+local PlayerDropdown = Tabs.Main:AddDropdown("SlapPlayerDropdown", {
+    Title = "Select Player to Slap",
+    Description = "Choose a player to slap",
+    Values = getPlayerNames(),
+    Multi = false,
+    Default = nil,
+    Callback = function(value)
+        selectedPlayer = value
+        print("Selected player to slap:", selectedPlayer)
+    end
+})
+
+-- Refresh dropdown when players join/leave
+Players.PlayerAdded:Connect(function()
+    PlayerDropdown:SetValues(getPlayerNames())
+end)
+
+Players.PlayerRemoving:Connect(function()
+    PlayerDropdown:SetValues(getPlayerNames())
+end)
+
+-- Slap Button
+Tabs.Main:AddButton({
+    Title = "Slap",
+    Description = "Slap selected player",
+    Callback = function()
+        if not selectedPlayer then
+            warn("No player selected!")
+            return
+        end
+
+        local targetPlayer = Players:FindFirstChild(selectedPlayer)
+        if not targetPlayer or not targetPlayer.Character then
+            warn("Selected player not found or has no character")
+            return
+        end
+
+        local glove = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("GiantGlove")
+        if not glove or not glove:FindFirstChild("Event") then
+            warn("GiantGlove or its Event not found!")
+            return
+        end
+
+        local args = {
+            "slash",
+            targetPlayer.Character,
+            Vector3.new(-2.462301254272461, 1.5903712835552142e-07, -11.744661331176758)
+        }
+
+        glove.Event:FireServer(unpack(args))
+        print("Slapped", selectedPlayer)
+    end
+})
