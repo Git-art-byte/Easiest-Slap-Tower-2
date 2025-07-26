@@ -220,7 +220,8 @@ local gloveNames = {
     "Quantum_glove",
     "Slap",
     "SecretSlap",
-    "FreeSlap"
+    "FreeSlap",
+    "HackerSlap"
 }
 
 -- Function to auto-equip the first available glove from Backpack
@@ -358,7 +359,8 @@ local gloveNames = {
     "Quantum_glove",
     "Slap",
     "SecretSlap",
-    "FreeSlap"
+    "FreeSlap",
+    "HackerSlap"
 }
 
 local Players = game:GetService("Players")
