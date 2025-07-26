@@ -54,11 +54,57 @@ local MoneyToggle = Tabs.Main:AddToggle("MoneyToggle", {
                     game:GetService("ReplicatedStorage"):WaitForChild("RestartRemotes")
                         :WaitForChild("GiveClaimMoney"):FireServer(unpack(args))
 
-                    task.wait(0.05) -- Avoid spamming too fast
+                    task.wait(0.0000000001) -- Avoid spamming too fast
                 end
             end)
         else
             print("Toggle Off")
+        end
+    end
+})
+
+local WalkSpeedInput = Tabs.Player:AddInput("WalkSpeedInput", {
+    Title = "WalkSpeed",
+    Description = "Enter a WalkSpeed value",
+    Default = "16", -- Default Roblox walk speed
+    Placeholder = "e.g. 50",
+    Numeric = true, -- Only allows numbers
+    Finished = true, -- Only calls callback when Enter is pressed
+    Callback = function(Value)
+        local speed = tonumber(Value)
+        if speed then
+            local character = game:GetService("Players").LocalPlayer.Character
+            if character and character:FindFirstChildOfClass("Humanoid") then
+                character:FindFirstChildOfClass("Humanoid").WalkSpeed = speed
+                print("WalkSpeed set to:", speed)
+            else
+                warn("Character or Humanoid not found.")
+            end
+        else
+            warn("Invalid number entered.")
+        end
+    end
+})
+
+local JumpPowerInput = Tabs.Player:AddInput("JumpPowerInput", {
+    Title = "JumpPower",
+    Description = "Enter a JumpPower value",
+    Default = "50", -- Default Roblox jump power
+    Placeholder = "e.g. 100",
+    Numeric = true,
+    Finished = true,
+    Callback = function(Value)
+        local jumpPower = tonumber(Value)
+        if jumpPower then
+            local character = game:GetService("Players").LocalPlayer.Character
+            if character and character:FindFirstChildOfClass("Humanoid") then
+                character:FindFirstChildOfClass("Humanoid").JumpPower = jumpPower
+                print("JumpPower set to:", jumpPower)
+            else
+                warn("Character or Humanoid not found.")
+            end
+        else
+            warn("Invalid number entered.")
         end
     end
 })
@@ -124,55 +170,6 @@ RunService.Stepped:Connect(function()
 end)
 
 
--- Input
-
-local WalkSpeedInput = Tabs.Player:AddInput("WalkSpeedInput", {
-    Title = "WalkSpeed",
-    Description = "Enter a WalkSpeed value",
-    Default = "16", -- Default Roblox walk speed
-    Placeholder = "e.g. 50",
-    Numeric = true, -- Only allows numbers
-    Finished = true, -- Only calls callback when Enter is pressed
-    Callback = function(Value)
-        local speed = tonumber(Value)
-        if speed then
-            local character = game:GetService("Players").LocalPlayer.Character
-            if character and character:FindFirstChildOfClass("Humanoid") then
-                character:FindFirstChildOfClass("Humanoid").WalkSpeed = speed
-                print("WalkSpeed set to:", speed)
-            else
-                warn("Character or Humanoid not found.")
-            end
-        else
-            warn("Invalid number entered.")
-        end
-    end
-})
-
-local JumpPowerInput = Tabs.Player:AddInput("JumpPowerInput", {
-    Title = "JumpPower",
-    Description = "Enter a JumpPower value",
-    Default = "50", -- Default Roblox jump power
-    Placeholder = "e.g. 100",
-    Numeric = true,
-    Finished = true,
-    Callback = function(Value)
-        local jumpPower = tonumber(Value)
-        if jumpPower then
-            local character = game:GetService("Players").LocalPlayer.Character
-            if character and character:FindFirstChildOfClass("Humanoid") then
-                character:FindFirstChildOfClass("Humanoid").JumpPower = jumpPower
-                print("JumpPower set to:", jumpPower)
-            else
-                warn("Character or Humanoid not found.")
-            end
-        else
-            warn("Invalid number entered.")
-        end
-    end
-})
-
-
 local rewardAmount = "0"
 
 local MoneyInput = Tabs.Main:AddInput("MoneyInput", {
@@ -208,16 +205,40 @@ Tabs.Main:AddButton({
     end
 })
 
+-- List of glove names to check for
+local gloveNames = {
+    "GiantGlove",
+    "GodlyGlove",
+    "SlapGlove",
+    "Quantum_glove"
+}
+
+-- Function to get the first equipped glove with an Event
+local function getEquippedGlove()
+    local character = game:GetService("Players").LocalPlayer.Character
+    if not character then return nil end
+
+    for _, name in ipairs(gloveNames) do
+        local glove = character:FindFirstChild(name)
+        if glove and glove:FindFirstChild("Event") then
+            return glove
+        end
+    end
+
+    return nil
+end
+
+-- Button: Slap All Players
 Tabs.Main:AddButton({
     Title = "Slap All [OP]",
     Description = "Slap all the players in the server except you",
     Callback = function()
         local Players = game:GetService("Players")
         local LocalPlayer = Players.LocalPlayer
-        local glove = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("GiantGlove")
+        local glove = getEquippedGlove()
 
-        if not glove or not glove:FindFirstChild("Event") then
-            warn("GiantGlove or its Event not found!")
+        if not glove then
+            warn("No valid glove with Event found!")
             return
         end
 
@@ -226,7 +247,7 @@ Tabs.Main:AddButton({
                 local args = {
                     "slash",
                     player.Character,
-                    Vector3.new(-2.462301254272461, 1.5903712835552142e-07, -11.744661331176758)
+                    Vector3.new(-2.4623, 1.59e-07, -11.7446) -- You can customize this vector
                 }
 
                 glove.Event:FireServer(unpack(args))
@@ -249,101 +270,7 @@ Tabs.Scripts:AddButton({
     Title = "Realistic Graphics",
     Description = "",
     Callback = function()
-        --[[
-	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
-]]
-local light = game.Lighting
-for i, v in pairs(light:GetChildren()) do
-	v:Destroy()
-end
-
-local ter = workspace.Terrain
-local color = Instance.new("ColorCorrectionEffect")
-local bloom = Instance.new("BloomEffect")
-local sun = Instance.new("SunRaysEffect")
-local blur = Instance.new("BlurEffect")
-
-color.Parent = light
-bloom.Parent = light
-sun.Parent = light
-blur.Parent = light
-
--- enable or disable shit
-
-local config = {
-
-	Terrain = true;
-	ColorCorrection = true;
-	Sun = true;
-	Lighting = true;
-	BloomEffect = true;
-	
-}
-
--- settings {
-
-color.Enabled = false
-color.Contrast = 0.15
-color.Brightness = 0.1
-color.Saturation = 0.25
-color.TintColor = Color3.fromRGB(255, 222, 211)
-
-bloom.Enabled = false
-bloom.Intensity = 0.1
-
-sun.Enabled = false
-sun.Intensity = 0.2
-sun.Spread = 1
-
-bloom.Enabled = false
-bloom.Intensity = 0.05
-bloom.Size = 32
-bloom.Threshold = 1
-
-blur.Enabled = false
-blur.Size = 6
-
--- settings }
-
-
-if config.ColorCorrection then
-	color.Enabled = true
-end
-
-
-if config.Sun then
-	sun.Enabled = true
-end
-
-
-if config.Terrain then
-	-- settings {
-	ter.WaterColor = Color3.fromRGB(10, 10, 24)
-	ter.WaterWaveSize = 0.15
-	ter.WaterWaveSpeed = 22
-	ter.WaterTransparency = 1
-	ter.WaterReflectance = 0.05
-	-- settings }
-end
-
-
-if config.Lighting then
-	-- settings {
-	light.Ambient = Color3.fromRGB(0, 0, 0)
-	light.Brightness = 4
-	light.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)
-	light.ColorShift_Top = Color3.fromRGB(0, 0, 0)
-	light.ExposureCompensation = 0
-	light.FogColor = Color3.fromRGB(132, 132, 132)
-	light.GlobalShadows = true
-	light.OutdoorAmbient = Color3.fromRGB(112, 117, 128)
-	light.Outlines = false
-	-- settings }
-end
-
-
-
-game:GetService("MaterialService")["Use2022Materials"] = true
+        loadstring(game:HttpGet("https://pastebin.com/raw/uqD7VqQU"))()
     end
 })
 
@@ -364,6 +291,21 @@ local function getPlayerNames()
     return names
 end
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local selectedPlayer = nil
+
+-- Function to return a list of all player names except the local player
+local function getPlayerNames()
+    local names = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            table.insert(names, player.Name)
+        end
+    end
+    return names
+end
+
 -- Dropdown
 local PlayerDropdown = Tabs.Main:AddDropdown("SlapPlayerDropdown", {
     Title = "Select Player to Slap",
@@ -377,7 +319,7 @@ local PlayerDropdown = Tabs.Main:AddDropdown("SlapPlayerDropdown", {
     end
 })
 
--- Refresh dropdown when players join/leave
+-- Auto refresh dropdown when players join/leave
 Players.PlayerAdded:Connect(function()
     PlayerDropdown:SetValues(getPlayerNames())
 end)
@@ -385,6 +327,27 @@ end)
 Players.PlayerRemoving:Connect(function()
     PlayerDropdown:SetValues(getPlayerNames())
 end)
+
+-- Function to find equipped glove (multi-glove support)
+local function getEquippedGlove()
+    local gloveNames = {
+        "GiantGlove",
+        "GodlyGlove",
+        "SlapGlove",
+        "Quantum_glove"
+    }
+
+    local character = LocalPlayer.Character
+    if not character then return nil end
+
+    for _, name in ipairs(gloveNames) do
+        local glove = character:FindFirstChild(name)
+        if glove and glove:FindFirstChild("Event") then
+            return glove
+        end
+    end
+    return nil
+end
 
 -- Slap Button
 Tabs.Main:AddButton({
@@ -402,16 +365,16 @@ Tabs.Main:AddButton({
             return
         end
 
-        local glove = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("GiantGlove")
-        if not glove or not glove:FindFirstChild("Event") then
-            warn("GiantGlove or its Event not found!")
+        local glove = getEquippedGlove()
+        if not glove then
+            warn("No valid glove equipped!")
             return
         end
 
         local args = {
             "slash",
             targetPlayer.Character,
-            Vector3.new(-2.462301254272461, 1.5903712835552142e-07, -11.744661331176758)
+            Vector3.new(-2.4623, 1.59e-07, -11.7446) -- You can tweak this vector
         }
 
         glove.Event:FireServer(unpack(args))
