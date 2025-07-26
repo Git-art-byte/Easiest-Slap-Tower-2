@@ -6,7 +6,7 @@ Fluent:Notify({
         Title = "Thanks You!",
         Content = "Thank you for using Our Script.",
         SubContent = "Enjoy!", -- Optional
-        Duration = 3 -- Set to nil to make the notification not disappear
+        Duration = 6 -- Set to nil to make the notification not disappear
 })
 
 SaveManager:SetLibrary(Fluent)
@@ -178,7 +178,7 @@ local rewardAmount = "0"
 local MoneyInput = Tabs.Main:AddInput("MoneyInput", {
     Title = "Money Amount",
     Description = "Enter the amount to give",
-    Default = "Default",
+    Default = "",
     Placeholder = "",
     Numeric = true,
     Finished = false,
@@ -347,14 +347,6 @@ game:GetService("MaterialService")["Use2022Materials"] = true
     end
 })
 
-Tabs.Main:AddButton({
-    Title = "Fly [OP]",
-    Description = "Make u fly",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
-    end
-})
-
 -- Store selected player name
 local selectedPlayer = nil
 
@@ -424,5 +416,13 @@ Tabs.Main:AddButton({
 
         glove.Event:FireServer(unpack(args))
         print("Slapped", selectedPlayer)
+    end
+})
+
+Tabs.Main:AddButton({
+    Title = "Fly [OP]",
+    Description = "Make u fly",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
     end
 })
