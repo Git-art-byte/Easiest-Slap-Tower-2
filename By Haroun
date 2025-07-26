@@ -97,17 +97,24 @@ local JumpPowerInput = Tabs.Player:AddInput("JumpPowerInput", {
         local jumpPower = tonumber(Value)
         if jumpPower then
             local character = game:GetService("Players").LocalPlayer.Character
-            if character and character:FindFirstChildOfClass("Humanoid") then
-                character:FindFirstChildOfClass("Humanoid").JumpPower = jumpPower
-                print("JumpPower set to:", jumpPower)
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.UseJumpPower = true -- ✅ This is the key fix
+                    humanoid.JumpPower = jumpPower
+                    print("JumpPower set to:", jumpPower)
+                else
+                    warn("Humanoid not found.")
+                end
             else
-                warn("Character or Humanoid not found.")
+                warn("Character not found.")
             end
         else
             warn("Invalid number entered.")
         end
     end
 })
+
 
 local infiniteJumpEnabled = false
 
@@ -205,7 +212,7 @@ Tabs.Main:AddButton({
     end
 })
 
--- List of glove names to check for
+-- List of glove names to equip and check
 local gloveNames = {
     "GiantGlove",
     "GodlyGlove",
@@ -213,7 +220,24 @@ local gloveNames = {
     "Quantum_glove"
 }
 
--- Function to get the first equipped glove with an Event
+-- Function to auto-equip the first available glove from Backpack
+local function autoEquipGlove()
+    local LocalPlayer = game:GetService("Players").LocalPlayer
+    local Backpack = LocalPlayer:FindFirstChild("Backpack")
+
+    if not Backpack then return end
+
+    for _, name in ipairs(gloveNames) do
+        local glove = Backpack:FindFirstChild(name)
+        if glove then
+            glove.Parent = LocalPlayer.Character
+            task.wait(0.1) -- small delay to allow glove to register
+            return glove
+        end
+    end
+end
+
+-- Function to get the equipped glove in Character
 local function getEquippedGlove()
     local character = game:GetService("Players").LocalPlayer.Character
     if not character then return nil end
@@ -224,39 +248,56 @@ local function getEquippedGlove()
             return glove
         end
     end
-
     return nil
 end
 
--- Button: Slap All Players
-Tabs.Main:AddButton({
-    Title = "Slap All [OP]",
-    Description = "Slap all the players in the server except you",
-    Callback = function()
-        local Players = game:GetService("Players")
-        local LocalPlayer = Players.LocalPlayer
-        local glove = getEquippedGlove()
+-- Toggle for auto-equip and loop slap
+local slapLoopRunning = false
+Tabs.Main:AddToggle("AutoEquipLoopSlapToggle", {
+    Title = "LoopSlap All [OP]",
+    Description = "slaps everyone in the server repeatedly except you",
+    Default = false,
+    Callback = function(state)
+        slapLoopRunning = state
+        if state then
+            print("Slap All loop started.")
 
-        if not glove then
-            warn("No valid glove with Event found!")
-            return
+            task.spawn(function()
+                while slapLoopRunning do
+                    local Players = game:GetService("Players")
+                    local LocalPlayer = Players.LocalPlayer
+
+                    -- Auto-equip if no glove equipped
+                    local glove = getEquippedGlove()
+                    if not glove then
+                        autoEquipGlove()
+                        glove = getEquippedGlove()
+                    end
+
+                    if glove then
+                        for _, player in pairs(Players:GetPlayers()) do
+                            if player ~= LocalPlayer and player.Character then
+                                local args = {
+                                    "slash",
+                                    player.Character,
+                                    Vector3.new(-2.4623, 1.59e-07, -11.7446)
+                                }
+                                glove.Event:FireServer(unpack(args))
+                            end
+                        end
+                    else
+                        warn("No valid glove equipped or found in backpack!")
+                    end
+
+                    task.wait(0.1) -- adjust for spam speed
+                end
+            end)
+        else
+            print("Slap All loop stopped.")
         end
-
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local args = {
-                    "slash",
-                    player.Character,
-                    Vector3.new(-2.4623, 1.59e-07, -11.7446) -- You can customize this vector
-                }
-
-                glove.Event:FireServer(unpack(args))
-            end
-        end
-
-        print("Slapped all players!")
     end
 })
+
 
 Tabs.Scripts:AddButton({
     Title = "Infinite Yield",
@@ -306,37 +347,19 @@ local function getPlayerNames()
     return names
 end
 
--- Dropdown
-local PlayerDropdown = Tabs.Main:AddDropdown("SlapPlayerDropdown", {
-    Title = "Select Player to Slap",
-    Description = "Choose a player to slap",
-    Values = getPlayerNames(),
-    Multi = false,
-    Default = nil,
-    Callback = function(value)
-        selectedPlayer = value
-        print("Selected player to slap:", selectedPlayer)
-    end
-})
+-- List of glove names to equip and use
+local gloveNames = {
+    "GiantGlove",
+    "GodlyGlove",
+    "SlapGlove",
+    "Quantum_glove"
+}
 
--- Auto refresh dropdown when players join/leave
-Players.PlayerAdded:Connect(function()
-    PlayerDropdown:SetValues(getPlayerNames())
-end)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
-Players.PlayerRemoving:Connect(function()
-    PlayerDropdown:SetValues(getPlayerNames())
-end)
-
--- Function to find equipped glove (multi-glove support)
+-- Get equipped glove in character
 local function getEquippedGlove()
-    local gloveNames = {
-        "GiantGlove",
-        "GodlyGlove",
-        "SlapGlove",
-        "Quantum_glove"
-    }
-
     local character = LocalPlayer.Character
     if not character then return nil end
 
@@ -349,7 +372,43 @@ local function getEquippedGlove()
     return nil
 end
 
--- Slap Button
+-- Try to equip glove from backpack
+local function autoEquipGlove()
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    if not backpack then return end
+
+    for _, name in ipairs(gloveNames) do
+        local glove = backpack:FindFirstChild(name)
+        if glove then
+            glove.Parent = LocalPlayer.Character
+            task.wait(0.1) -- wait for it to equip
+            return true
+        end
+    end
+end
+
+-- Dropdown (you already have this)
+local PlayerDropdown = Tabs.Main:AddDropdown("SlapPlayerDropdown", {
+    Title = "Select a Player",
+    Description = "Choose a player to slap them",
+    Values = getPlayerNames(),
+    Multi = false,
+    Default = nil,
+    Callback = function(value)
+        selectedPlayer = value
+        print("Selected player to slap:", selectedPlayer)
+    end
+})
+
+-- Auto refresh dropdown
+Players.PlayerAdded:Connect(function()
+    PlayerDropdown:SetValues(getPlayerNames())
+end)
+Players.PlayerRemoving:Connect(function()
+    PlayerDropdown:SetValues(getPlayerNames())
+end)
+
+-- Slap Button with auto-equip
 Tabs.Main:AddButton({
     Title = "Slap",
     Description = "Slap selected player",
@@ -361,26 +420,34 @@ Tabs.Main:AddButton({
 
         local targetPlayer = Players:FindFirstChild(selectedPlayer)
         if not targetPlayer or not targetPlayer.Character then
-            warn("Selected player not found or has no character")
+            warn("Target player not found or has no character.")
             return
         end
 
+        -- Ensure glove is equipped
         local glove = getEquippedGlove()
         if not glove then
-            warn("No valid glove equipped!")
+            autoEquipGlove()
+            glove = getEquippedGlove()
+        end
+
+        if not glove or not glove:FindFirstChild("Event") then
+            warn("No valid glove equipped or Event missing.")
             return
         end
 
+        -- Slap
         local args = {
             "slash",
             targetPlayer.Character,
-            Vector3.new(-2.4623, 1.59e-07, -11.7446) -- You can tweak this vector
+            Vector3.new(-2.4623, 1.59e-07, -11.7446)
         }
 
         glove.Event:FireServer(unpack(args))
         print("Slapped", selectedPlayer)
     end
 })
+
 
 Tabs.Main:AddButton({
     Title = "Fly [OP]",
