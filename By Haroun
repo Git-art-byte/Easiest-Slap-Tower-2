@@ -217,7 +217,8 @@ local gloveNames = {
     "GiantGlove",
     "GodlyGlove",
     "SlapGlove",
-    "Quantum_glove"
+    "Quantum_glove",
+    "Slap"
 }
 
 -- Function to auto-equip the first available glove from Backpack
@@ -352,7 +353,8 @@ local gloveNames = {
     "GiantGlove",
     "GodlyGlove",
     "SlapGlove",
-    "Quantum_glove"
+    "Quantum_glove",
+    "Slap"
 }
 
 local Players = game:GetService("Players")
