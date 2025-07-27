@@ -35,33 +35,41 @@ InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
 
 -- Toggle
-local running = false
+local runningMoneyLoop = false
 
 local MoneyToggle = Tabs.Main:AddToggle("MoneyToggle", {
     Title = "Infinite Money [OP]",
-    Description = "",
+    Description = "Gives Inf Money ",
     Default = false,
     Callback = function(state)
-        running = state
+        runningMoneyLoop = state
         if state then
-            print("Toggle On")
+            print("Money Toggle On")
             task.spawn(function()
-                while running do
-                    local args = {
-                        game:GetService("Players"):WaitForChild("Haroun2010_94")
-                    }
+                while runningMoneyLoop do
+                    local args = { "999999999999999999" }
 
-                    game:GetService("ReplicatedStorage"):WaitForChild("RestartRemotes")
-                        :WaitForChild("GiveClaimMoney"):FireServer(unpack(args))
+                    local success, err = pcall(function()
+                        game:GetService("ReplicatedStorage")
+                            :WaitForChild("CratesUtilities")
+                            :WaitForChild("Remotes")
+                            :WaitForChild("GiveReward")
+                            :FireServer(unpack(args))
+                    end)
 
-                    task.wait(0.0000000001) -- Avoid spamming too fast
+                    if not success then
+                        warn("Failed to fire GiveReward:", err)
+                    end
+
+                    task.wait(0.000000001) -- adjust delay to avoid detection
                 end
             end)
         else
-            print("Toggle Off")
+            print("Money Toggle Off")
         end
     end
 })
+
 
 local WalkSpeedInput = Tabs.Player:AddInput("WalkSpeedInput", {
     Title = "WalkSpeed",
@@ -209,6 +217,38 @@ Tabs.Main:AddButton({
             :WaitForChild("GiveReward"):FireServer(unpack(args))
 
         print("Fired GiveReward with:", rewardAmount)
+    end
+})
+
+Tabs.Main:AddButton({
+    Title = "Get All Tools",
+    Description = "Gives you all the tools",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local LocalPlayer = Players.LocalPlayer
+
+        -- Give "Carpet"
+        ReplicatedStorage:WaitForChild("CratesUtilities")
+            :WaitForChild("Remotes")
+            :WaitForChild("GiveReward"):FireServer("Carpet")
+
+        -- Give "Glove"
+        ReplicatedStorage:WaitForChild("CratesUtilities")
+            :WaitForChild("Remotes")
+            :WaitForChild("GiveReward"):FireServer("Glove")
+
+        -- Fire GodEvent and Quantum
+        ReplicatedStorage:WaitForChild("Money_Remotes")
+            :WaitForChild("GodEvent And Quantum")
+            :FireServer(LocalPlayer)
+
+        -- Fire AdminEvent and Coils
+        ReplicatedStorage:WaitForChild("Money_Remotes")
+            :WaitForChild("AdminEvent and FireCoil and VoidCoil and GoldCoil")
+            :FireServer(LocalPlayer)
+
+        print("All items and events sent to:", LocalPlayer.Name)
     end
 })
 
