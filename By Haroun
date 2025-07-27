@@ -237,7 +237,7 @@ local moneyRewards = {
     "AdminEvent",
     "FireCoil",
     "VoidCoil",
-    "GoldCoil"
+    "GoldenCoil"
 }
 
 -- Function to fire crate reward
