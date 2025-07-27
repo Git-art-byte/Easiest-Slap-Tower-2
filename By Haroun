@@ -220,37 +220,55 @@ Tabs.Main:AddButton({
     end
 })
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
 Tabs.Main:AddButton({
-    Title = "Get All Tools",
-    Description = "Gives you all the tools",
+    Title = "Give All Items",
+    Description = "Gives Glove, Carpet, GodEvent, Quantum, Coils, and AdminEvent",
     Callback = function()
-        local Players = game:GetService("Players")
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local LocalPlayer = Players.LocalPlayer
+        -- 1. Glove and Carpet (string-based rewards)
+        local rewardRemote = ReplicatedStorage:FindFirstChild("CratesUtilities")
+            and ReplicatedStorage.CratesUtilities:FindFirstChild("Remotes")
+            and ReplicatedStorage.CratesUtilities.Remotes:FindFirstChild("GiveReward")
 
-        -- Give "Carpet"
-        ReplicatedStorage:WaitForChild("CratesUtilities")
-            :WaitForChild("Remotes")
-            :WaitForChild("GiveReward"):FireServer("Carpet")
+        if rewardRemote then
+            rewardRemote:FireServer("Glove")
+            rewardRemote:FireServer("Carpet")
+        else
+            warn("GiveReward remote not found.")
+        end
 
-        -- Give "Glove"
-        ReplicatedStorage:WaitForChild("CratesUtilities")
-            :WaitForChild("Remotes")
-            :WaitForChild("GiveReward"):FireServer("Glove")
+        -- 2. GodEvent and Quantum (Money_Remotes)
+        local moneyRemotes = ReplicatedStorage:FindFirstChild("Money_Remotes")
+        if moneyRemotes then
+            local quantum = moneyRemotes:FindFirstChild("Quantum")
+            local godEvent = moneyRemotes:FindFirstChild("GodEvent")
 
-        -- Fire GodEvent and Quantum
-        ReplicatedStorage:WaitForChild("Money_Remotes")
-            :WaitForChild("GodEvent And Quantum")
-            :FireServer(LocalPlayer)
+            if quantum then quantum:FireServer(LocalPlayer) end
+            if godEvent then godEvent:FireServer(LocalPlayer) end
+        else
+            warn("Money_Remotes folder not found.")
+        end
 
-        -- Fire AdminEvent and Coils
-        ReplicatedStorage:WaitForChild("Money_Remotes")
-            :WaitForChild("AdminEvent and FireCoil and VoidCoil and GoldCoil")
-            :FireServer(LocalPlayer)
-
-        print("All items and events sent to:", LocalPlayer.Name)
+        -- 3. Coils + AdminEvent (same folder)
+        local coilRemotes = ReplicatedStorage:FindFirstChild("Coils")
+        if coilRemotes then
+            for _, name in ipairs({ "FireCoil", "VoidCoil", "GoldCoil", "AdminEvent" }) do
+                local remote = coilRemotes:FindFirstChild(name)
+                if remote then
+                    remote:FireServer(LocalPlayer)
+                else
+                    warn(name .. " remote not found in Coils.")
+                end
+            end
+        else
+            warn("Coils folder not found.")
+        end
     end
 })
+
 
 -- List of glove names to equip and check
 local gloveNames = {
