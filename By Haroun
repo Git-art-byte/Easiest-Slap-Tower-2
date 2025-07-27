@@ -279,9 +279,22 @@ Tabs.Main:AddButton({
 
         print("All rewards fired once.")
     end
+
+	local args = {
+	game:GetService("Players"):WaitForChild("Xxx_Tentation318")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("FreeGear_Remotes"):WaitForChild("FreeGearEvent"):FireServer(unpack(args))
 })
 
+local args = {
+	game:GetService("Players"):WaitForChild("Xxx_Tentation318")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("FreeGear_Remotes"):WaitForChild("FreeGearEvent"):FireServer(unpack(args))
 
+local args = {
+	game:GetService("Players"):WaitForChild("Xxx_Tentation318")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("FreeGear_Remotes"):WaitForChild("FreeGearEvent"):FireServer(unpack(args))
 
 -- List of glove names to equip and check
 local gloveNames = {
