@@ -224,50 +224,63 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-Tabs.Main:AddButton({
-    Title = "Give All Items",
-    Description = "Gives Glove, Carpet, GodEvent, Quantum, Coils, and AdminEvent",
-    Callback = function()
-        -- 1. Glove and Carpet (string-based rewards)
-        local rewardRemote = ReplicatedStorage:FindFirstChild("CratesUtilities")
-            and ReplicatedStorage.CratesUtilities:FindFirstChild("Remotes")
-            and ReplicatedStorage.CratesUtilities.Remotes:FindFirstChild("GiveReward")
+-- CratesUtilities rewards
+local crateRewards = {
+    "Carpet",
+    "Glove"
+}
 
-        if rewardRemote then
-            rewardRemote:FireServer("Glove")
-            rewardRemote:FireServer("Carpet")
-        else
-            warn("GiveReward remote not found.")
-        end
+-- Money_Remotes rewards
+local moneyRewards = {
+    "Quantum",
+    "GodEvent",
+    "AdminEvent",
+    "FireCoil",
+    "VoidCoil",
+    "GoldCoil"
+}
 
-        -- 2. GodEvent and Quantum (Money_Remotes)
-        local moneyRemotes = ReplicatedStorage:FindFirstChild("Money_Remotes")
-        if moneyRemotes then
-            local quantum = moneyRemotes:FindFirstChild("Quantum")
-            local godEvent = moneyRemotes:FindFirstChild("GodEvent")
-
-            if quantum then quantum:FireServer(LocalPlayer) end
-            if godEvent then godEvent:FireServer(LocalPlayer) end
-        else
-            warn("Money_Remotes folder not found.")
-        end
-
-        -- 3. Coils + AdminEvent (same folder)
-        local coilRemotes = ReplicatedStorage:FindFirstChild("Coils")
-        if coilRemotes then
-            for _, name in ipairs({ "FireCoil", "VoidCoil", "GoldCoil", "AdminEvent" }) do
-                local remote = coilRemotes:FindFirstChild(name)
-                if remote then
-                    remote:FireServer(LocalPlayer)
-                else
-                    warn(name .. " remote not found in Coils.")
-                end
-            end
-        else
-            warn("Coils folder not found.")
+-- Function to fire crate reward
+local function fireCrateReward(name)
+    local crates = ReplicatedStorage:FindFirstChild("CratesUtilities")
+    if crates and crates:FindFirstChild("Remotes") then
+        local remote = crates.Remotes:FindFirstChild("GiveReward")
+        if remote then
+            remote:FireServer(name)
         end
     end
+end
+
+-- Function to fire money reward
+local function fireMoneyReward(name)
+    local moneyRemotes = ReplicatedStorage:FindFirstChild("Money_Remotes")
+    if moneyRemotes then
+        local remote = moneyRemotes:FindFirstChild(name)
+        if remote then
+            remote:FireServer(LocalPlayer)
+        end
+    end
+end
+
+-- Add the button
+Tabs.Main:AddButton({
+    Title = "Get All Tools",
+    Description = "Gives you all Tools",
+    Callback = function()
+        -- Fire CrateUtilities rewards
+        for _, name in ipairs(crateRewards) do
+            fireCrateReward(name)
+        end
+
+        -- Fire Money_Remotes rewards
+        for _, name in ipairs(moneyRewards) do
+            fireMoneyReward(name)
+        end
+
+        print("All rewards fired once.")
+    end
 })
+
 
 
 -- List of glove names to equip and check
